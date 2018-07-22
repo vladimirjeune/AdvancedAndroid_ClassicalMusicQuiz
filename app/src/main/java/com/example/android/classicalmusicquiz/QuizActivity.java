@@ -64,7 +64,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
 
         // TODO (2): Replace the ImageView with the SimpleExoPlayerView, and remove the method calls on the composerView.
 //        ImageView composerView = (ImageView) findViewById(R.id.playerView);
-        SimpleExoPlayerView
+
                 mPlayerView = (SimpleExoPlayerView) findViewById(R.id.playerView);
 
         boolean isNewGame = !getIntent().hasExtra(REMAINING_SONGS_KEY);
