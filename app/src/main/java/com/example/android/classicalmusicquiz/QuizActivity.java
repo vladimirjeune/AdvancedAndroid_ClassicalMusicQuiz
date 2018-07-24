@@ -274,8 +274,10 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
     
     // ExoPlayer Event Listeners
 
+
     @Override
     public void onTimelineChanged(Timeline timeline, Object manifest) {
+
     }
 
     @Override
@@ -303,5 +305,9 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onPositionDiscontinuity() {
+
     }
+
+
+
 }
