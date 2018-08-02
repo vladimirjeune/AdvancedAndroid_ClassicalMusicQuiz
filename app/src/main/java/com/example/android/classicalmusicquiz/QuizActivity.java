@@ -16,6 +16,8 @@
 
 package com.example.android.classicalmusicquiz;
 
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -23,7 +25,9 @@ import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.media.session.MediaButtonReceiver;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -67,6 +71,8 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
     private SimpleExoPlayerView mPlayerView;
     private MediaSessionCompat mMediaSession;
     private PlaybackStateCompat.Builder mStateBuilder;
+    private NotificationManager mNotificationManager;
+    private int mMediaNotificationId = 42;
 
 
     @Override
@@ -187,6 +193,66 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
     // TODO (1): Create a method that shows a MediaStyle notification with two actions (play/pause, skip to previous). Clicking on the notification should launch this activity. It should take one argument that defines the state of MediaSession.
 
     /**
+     * SHOWMEDIANOTIFICATION - Show MediaStyle Notification with 1 of 2 actions.
+     * @param playbackState - PlaybackState of the MediaSession
+     */
+    public void showMediaNotification(PlaybackStateCompat playbackState) {
+        // Create builder
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+
+        // Variables for actions
+        int icon;
+        String playPause;
+
+        // Set variables correctly
+        if (playbackState.getState() == PlaybackStateCompat.STATE_PLAYING) {
+            icon = R.drawable.exo_controls_play;
+            playPause = getString(R.string.play);
+        } else {
+            icon = R.drawable.exo_controls_pause;
+            playPause = getString(R.string.pause);
+        }
+
+        // Set the 2 actions
+        NotificationCompat.Action playPauseAction = new NotificationCompat.Action(
+                icon,
+                playPause,
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_PLAY_PAUSE)
+        );
+
+        NotificationCompat.Action skipToPreviousAction = new NotificationCompat.Action(
+                icon,
+                playPause,
+                MediaButtonReceiver.buildMediaButtonPendingIntent(this, PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
+        );
+
+        // The PendingIntent that will be called when the button is pushed
+        // Since launch mode is Single Top in Manifest, Activity will be brought to front instead of restarted. Yes.
+        PendingIntent contentNotificationPendingIntent = PendingIntent.getActivity(
+                this,
+                0,
+                new Intent(this, QuizActivity.class),
+                0
+        );
+
+
+        builder.setContentTitle(getString(R.string.guess))
+                .setContentText(getString(R.string.notification_text))
+                .setContentIntent(contentNotificationPendingIntent)
+                .setSmallIcon(R.mipmap.ic_launcher_round)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+                .addAction(playPauseAction)
+                .addAction(skipToPreviousAction)
+                .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                .setMediaSession(mMediaSession.getSessionToken())
+                        .setShowActionsInCompactView(0, 1));  // Get sessionToken, and give order of actionButtons on Player
+
+        mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);  // Not sure why this way and not the other
+        mNotificationManager.notify(mMediaNotificationId, builder.build());
+
+    }
+
+    /**
      * Initialize ExoPlayer.
      * @param mediaUri The URI of the sample to play.
      */
@@ -215,6 +281,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
      * Release ExoPlayer.
      */
     private void releasePlayer() {
+        mNotificationManager.cancelAll();  // Added so Notifications do not stick around after no longer needed
         mExoPlayer.stop();
         mExoPlayer.release();
         mExoPlayer = null;
@@ -345,6 +412,7 @@ public class QuizActivity extends AppCompatActivity implements View.OnClickListe
         mMediaSession.setPlaybackState(mStateBuilder.build());
         
         // TODO (2): Call the method to show the notification, passing in the PlayBackStateCompat object.
+        showMediaNotification(mStateBuilder.build());
     }
 
     @Override
